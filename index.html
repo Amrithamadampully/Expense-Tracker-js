@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Expense Tracker</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- jsPDF AutoTable Plugin -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+    <script>
+if (localStorage.getItem("loggedIn") !== "true") {
+    window.location.href = "login.html";
+}
+</script>
+
+
+    <style>
+        body {
+            background: linear-gradient(120deg, #2c5364, #203a43, #0f2027);
+            min-height: 100vh;
+        }
+
+        .tracker-card {
+            background: #1f2a30;
+            width: 420px;
+            padding: 25px;
+            border-radius: 10px;
+        }
+
+        .list-group-item {
+            background: #2a3338;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: none;
+            margin-bottom: 5px;
+        }
+
+        .delete-btn {
+            background: #f1c40f;
+            border: none;
+            padding: 5px 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container d-flex justify-content-center mt-5">
+    <div class="tracker-card">
+
+        <h2 class="text-white">Expense Tracker</h2>
+
+<button class="btn btn-danger w-100 mb-3" onclick="logout()">Logout</button>
+
+        <h5 class="text-white">Add Expense</h5>
+
+        <input type="date" id="date" class="form-control mb-2">
+        <input type="text" id="title" class="form-control mb-2" placeholder="Description">
+        <input type="number" id="amount" class="form-control mb-2" placeholder="Amount">
+
+        <select id="type" class="form-control mb-3">
+            <option value="income">Income</option>
+            <option value="expense">Expense</option>
+        </select>
+
+        <button id="addBtn" class="btn btn-warning w-100">Add</button>
+        <button id="downloadPDF" class="btn btn-success mt-3 w-100">Download Summary</button>
+
+        <hr class="text-white">
+
+        <h5 class="text-white">Summary</h5>
+        <p class="text-white">
+            Total Income: ₹<span id="income">0</span> |
+            Total Expense: ₹<span id="expense">0</span> |
+            Balance: ₹<span id="balance">0</span>
+        </p>
+
+        <h5 class="text-white">Records</h5>
+        <ul id="records" class="list-group"></ul>
+
+    </div>
+</div>
+
+<script>
+    let totalIncome = 0;
+    let totalExpense = 0;
+
+    function updateSummary() {
+        $("#income").text(totalIncome);
+        $("#expense").text(totalExpense);
+        $("#balance").text(totalIncome - totalExpense);
+    }
+
+    $("#addBtn").click(function () {
+
+        let date = $("#date").val();
+        let title = $("#title").val();
+        let amount = Number($("#amount").val());
+        let type = $("#type").val();
+
+        if (!date || !title || !amount) {
+            alert("Please fill all fields");
+            return;
+        }
+
+        if (type === "income") {
+            totalIncome += amount;
+        } else {
+            totalExpense += amount;
+        }
+
+        let record = $(`
+            <li class="list-group-item">
+                ${date} | ${title} | ${amount}
+                <button class="delete-btn">X</button>
+            </li>
+        `);
+
+        record.find(".delete-btn").click(function () {
+            if (type === "income") {
+                totalIncome -= amount;
+            } else {
+                totalExpense -= amount;
+            }
+            record.remove();
+            updateSummary();
+        });
+
+        $("#records").append(record);
+
+        updateSummary();
+
+        $("#title").val("");
+        $("#amount").val("");
+    });
+
+
+function logout() {
+    localStorage.removeItem("loggedIn");
+    window.location.href = "login.html";
+}
+
+</script>
+
+<script>
+const { jsPDF } = window.jspdf;
+
+$("#downloadPDF").click(function () {
+
+    let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+
+    if (expenses.length === 0) {
+        alert("No records available!");
+        return;
+    }
+
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text("Expense Report", 14, 20);
+
+    let totalIncome = 0;
+    let totalExpense = 0;
+    let rows = [];
+
+    expenses.forEach(item => {
+
+        if (item.type === "Income") {
+            totalIncome += Number(item.amount);
+        } else {
+            totalExpense += Number(item.amount);
+        }
+
+        rows.push([
+            item.date,
+            item.description,
+            item.type,
+            "Rs. " + item.amount
+        ]);
+    });
+
+    let balance = totalIncome - totalExpense;
+
+    // Summary
+    doc.setFontSize(14);
+    doc.text("Summary", 14, 30);
+
+    doc.setFontSize(12);
+    doc.text("Total Income: Rs. " + totalIncome, 14, 38);
+    doc.text("Total Expense: Rs. " + totalExpense, 14, 46);
+    doc.text("Balance: Rs. " + balance, 14, 54);
+
+    // Table
+    doc.autoTable({
+        startY: 65,
+        head: [["Date", "Description", "Category", "Amount"]],
+        body: rows,
+        theme: "grid"
+    });
+
+    doc.save("Expense_Report.pdf");
+});
+</script>
+
+
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<!-- HTML5 document declaration -->
+
+<html lang="en">
+<!-- Root element -->
+
+<head>
+    <meta charset="UTF-8">
+    <!-- Supports all characters -->
+
+    <title>User Login</title>
+    <!-- Page title -->
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+        }
+
+        .form-box {
+            width: 350px;
+            margin: 100px auto;     /* Center form vertically */
+            padding: 25px;
+            background: #fff;
+            border-radius: 6px;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: orange;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .error {
+            color: red;
+            font-size: 14px;
+        }
+
+        a {
+            float: right;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="form-box">
+
+    <!-- Link to registration page -->
+    <a href="register.html">Sign up</a>
+
+    <h2>Login</h2>
+
+    <!-- Form submission calls loginUser() -->
+    <form onsubmit="return loginUser()">
+
+        <!-- Username input -->
+        <input type="text" id="loginUsername" placeholder="Username">
+
+        <!-- Password input -->
+        <input type="password" id="loginPassword" placeholder="Password">
+
+        <!-- Error message display -->
+        <p class="error" id="loginError"></p>
+
+        <!-- Login button -->
+        <button type="submit">Login</button>
+
+    </form>
+</div>
+
+<script>
+    // Function runs when Login button is clicked
+    function loginUser() {
+
+        // Get input values
+        let username = document.getElementById("loginUsername").value.trim();
+        let password = document.getElementById("loginPassword").value;
+        let error = document.getElementById("loginError");
+
+        // Get registered user data from localStorage
+        let storedUser = JSON.parse(localStorage.getItem("user"));
+
+        // If no user registered
+        if (!storedUser) {
+            error.textContent = "Please register first";
+            return false;
+        }
+
+        // Validate username and password
+        if (username === storedUser.username && password === storedUser.password) {
+
+            // Save login session
+            localStorage.setItem("loggedIn", "true");
+
+            // Redirect to expense tracker page
+            window.location.href = "index.html";
+        } else {
+            error.textContent = "Invalid username or password";
+        }
+
+        return false;  // Prevent page reload
+    }
+</script>
+
+</body>
+</html>
